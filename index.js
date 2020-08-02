@@ -2,6 +2,8 @@ const express = require('express');         // Express Web Server
 const busboy = require('connect-busboy');   // Middleware to handle the file upload https://github.com/mscdex/connect-busboy
 const path = require('path');               // Used for manipulation with path
 const fs = require('fs-extra');             // Classic fs
+const {spawn} = require('child_process');
+
 
 const app = express(); // Initialize the express web server
 app.use(busboy({
@@ -31,9 +33,26 @@ app.route('/upload').post((req, res, next) => {
         // On finish of the upload
         fstream.on('close', () => {
             console.log(`Upload of '${filename}' finished`);
-            res.redirect('back');
+            // res.redirect('/Result');
         });
     });
+
+    const python = spawn('python', ['test.py']);
+    // collect data from script
+    // python.stdout.on('data', function (data) {
+    //     console.log('Executing ML on uploaded tiff images ...');
+    //     res.sendfile('loading.html',{
+    //         root: path.join(__dirname, './public/')
+    //     })
+    // });
+    // in close event we are sure that stream from child process is closed
+    python.on('close', (code) => {
+        console.log(`child process close all stdio with code ${code}`);
+        // send data to browser
+        // res.send(dataToSend)
+        res.redirect('/Result');
+    });
+
 });
 
 
@@ -50,8 +69,8 @@ app.route('/Services').get((req, res) => {
         root: path.join(__dirname, './public/')
     })
 });
-app.route('/Analysis').get((req, res) => {
-    res.sendFile('index.html', {
+app.route('/Result').get((req, res) => {
+    res.sendFile('analysis.html', {
         root: path.join(__dirname, './public/')
     })
 });
